@@ -2,7 +2,7 @@
 name = "merkle-tree"
 version = "0.1.0"
 edition = "2021"
-description = "A small incremental Merkle tree for learning how the structure works"
+description = "Small algorithms and apps, starting with an incremental Merkle tree"
 
 [dependencies]
 sha2 = "0.10"
