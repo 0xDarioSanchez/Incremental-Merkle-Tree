@@ -19,10 +19,10 @@ fn main() {
     }
 
     let ok = proof.verify(&tree.root(), b"beta");
-    println!("verify beta: {ok}");
+    println!("Checking beta is in the tree: {ok}");
 
     let mut tampered = proof.clone();
-    tampered.siblings[0].0[0] ^= 0xff;
+    tampered.siblings[0].0[0] ^= 0x01;          // flip the first bit of the first sibling
     let bad = tampered.verify(&tree.root(), b"beta");
-    println!("verify beta with one sibling bit flipped: {bad}");
+    println!("Checking beta but with one sibling bit flipped: {bad}");
 }
