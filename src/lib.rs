@@ -253,3 +253,90 @@ fn hash_nodes(left: Hash, right: Hash) -> Hash {
     hasher.update(right.0);
     Hash(hasher.finalize().into())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn empty_root(depth: usize) -> Hash {
+        let mut node = hash_leaf(&[]);
+        for _ in 0..depth {
+            node = hash_nodes(node, node);
+        }
+        node
+    }
+
+    #[test]
+    fn empty_root_matches_precomputed_zeros() {
+        let tree = IncrementalMerkleTree::new(4);
+        assert!(tree.is_empty());
+        assert_eq!(tree.root(), empty_root(4));
+        assert_eq!(IncrementalMerkleTree::default().root(), tree.root());
+    }
+
+    #[test]
+    fn inserts_change_the_root() {
+        let mut tree = IncrementalMerkleTree::new(4);
+        let empty = tree.root();
+
+        tree.insert(b"a").unwrap();
+        let after_one = tree.root();
+        assert_ne!(empty, after_one);
+
+        tree.insert(b"b").unwrap();
+        assert_ne!(after_one, tree.root());
+        assert_eq!(tree.len(), 2);
+    }
+
+    #[test]
+    fn frontier_root_matches_recomputed_tree() {
+        let mut tree = IncrementalMerkleTree::new(3);
+        for leaf in [b"one".as_slice(), b"two", b"three", b"four", b"five"] {
+            tree.insert(leaf).unwrap();
+        }
+        assert_eq!(tree.root(), tree.hash_range(0, tree.capacity()));
+    }
+
+    #[test]
+    fn proof_verifies_the_inserted_leaf() {
+        let mut tree = IncrementalMerkleTree::new(4);
+        tree.insert(b"alpha").unwrap();
+        tree.insert(b"beta").unwrap();
+        tree.insert(b"gamma").unwrap();
+
+        let proof = tree.prove(1).unwrap();
+        assert_eq!(proof.siblings.len(), tree.depth());
+        assert!(proof.verify(&tree.root(), b"beta"));
+    }
+
+    #[test]
+    fn wrong_leaf_or_flipped_sibling_fails() {
+        let mut tree = IncrementalMerkleTree::new(4);
+        tree.insert(b"alpha").unwrap();
+        tree.insert(b"beta").unwrap();
+        let proof = tree.prove(1).unwrap();
+
+        assert!(!proof.verify(&tree.root(), b"gamma"));
+
+        let mut tampered = proof.clone();
+        tampered.siblings[0].0[0] ^= 0xff;
+        assert!(!tampered.verify(&tree.root(), b"beta"));
+    }
+
+    #[test]
+    fn insert_past_capacity_errors() {
+        let mut tree = IncrementalMerkleTree::new(2);
+        assert_eq!(tree.capacity(), 4);
+        for byte in 0..4 {
+            tree.insert(&[byte]).unwrap();
+        }
+        assert_eq!(tree.insert(b"overflow"), Err(TreeFull));
+    }
+
+    #[test]
+    fn proof_for_missing_leaf_errors() {
+        let tree = IncrementalMerkleTree::new(2);
+        assert_eq!(tree.prove(0), Err(IndexOutOfRange));
+    }
+}
