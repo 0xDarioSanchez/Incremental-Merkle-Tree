@@ -1,9 +1,8 @@
 //! A fixed-depth incremental Merkle tree.
 //!
-//! Leaves are appended one at a time. The tree keeps a frontier — the latest
-//! left-child hash at each level — so the root updates in one hash per level.
-//! Empty positions use a precomputed zero hash, which means the root is defined
-//! before the tree is full.
+//! Leaves are appended one at a time. 
+//! The tree keeps a frontier
+//! Empty positions use a precomputed zero hash.
 
 use sha2::{Digest, Sha256};
 use std::fmt;
@@ -68,7 +67,7 @@ impl Proof {
     /// Re-hash `data` with the siblings and check the result against `root`.
     ///
     /// An even index means this node is on the left, so the sibling is appended
-    /// on the right. An odd index means the sibling is on the left.
+    /// on the right, while an odd index means the sibling is on the left.
     pub fn verify(&self, root: &Hash, data: &[u8]) -> bool {
         let mut current = hash_leaf(data);
         let mut cursor = self.index;
@@ -106,7 +105,6 @@ impl IncrementalMerkleTree {
     /// Create an empty tree. `depth` of 4 holds 16 leaves.
     ///
     /// # Panics
-    ///
     /// Panics if `depth` is greater than or equal to the width of `usize`,
     /// because the capacity `2^depth` would not fit.
     pub fn new(depth: usize) -> Self {
