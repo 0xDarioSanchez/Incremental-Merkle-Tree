@@ -13,6 +13,7 @@ impl fmt::Display for Hash {
     /// Turns a hash into text. It walks the 32 bytes and writes each one as two lowercase 
     /// hex digits ({:02x}), so a digest prints as 64 characters
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Walk the 32 bytes and write each one as two lowercase hex digits ({:02x}), so a digest prints as 64 characters
         for byte in self.0 {
             write!(f, "{:02x}", byte)?;
         }
@@ -30,8 +31,11 @@ impl fmt::Debug for Hash {
 impl Hash {
     /// Hashes the data using SHA-256.
     pub fn new(data: &[u8]) -> Self {
+        // Create a new SHA-256 hasher.
         let mut hasher = Sha256::new();
+        // Update the hasher with the data. 
         hasher.update(data);
+        // Finalize the hash and return it as a Hash struct.
         Self(hasher.finalize().into())
     }
 }
